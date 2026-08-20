@@ -12,6 +12,100 @@
 
 https://github.com/user-attachments/assets/0840f496-575c-4ca6-83a8-87bb01a85c5f
 
+## About this fork
+
+Personal fork of [`caelestia-dots/shell`](https://github.com/caelestia-dots/shell), tracked
+as the `upstream` remote. Work happens on the `leah` branch; `main` is left alone so it stays
+a clean mirror of upstream.
+
+Installed from source into `$HOME/.config/quickshell/caelestia`, which takes precedence over
+the AUR package's `/etc/xdg/quickshell/caelestia`. The `caelestia-shell` package must not be
+installed at the same time — if it is, remove it with `pacman -Rdd caelestia-shell` (`-Rdd`
+skips the dependency check so `caelestia-cli` stays put; it only lists the shell as an optdep).
+
+One-time build setup:
+
+```sh
+cmake -B build -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=/ \
+  -DINSTALL_QSCONFDIR="$HOME/.config/quickshell/caelestia"
+cmake --build build && sudo cmake --install build
+sudo chown -R $USER ~/.config/quickshell/caelestia
+```
+
+Build dependencies beyond the runtime ones: `cmake`, `ninja`, `qt6-shadertools`.
+
+### Seeing a change
+
+For QML-only edits — anything under `modules/`, `services/`, `components/`, `utils/` — no
+rebuild is needed, just reinstall and restart:
+
+```sh
+cmake --install build
+pkill -f 'qs -c caelestia'; caelestia shell -d
+```
+
+For edits to `plugin/` or `extras/` (the C++ `Caelestia` QML module, which is where `Tokens`,
+`Config` and the per-monitor config manager live), rebuild first:
+
+```sh
+cmake --build build && sudo cmake --install build
+pkill -f 'qs -c caelestia'; caelestia shell -d
+```
+
+> [!IMPORTANT]
+> Always `pkill` before restarting, and confirm with `pgrep -a qs` that exactly one instance
+> is left. A shell started before an install has the old QML parsed into memory and keeps
+> rendering it, so changes appear to have no effect even though the files on disk are correct.
+
+Before committing, run the upstream convention linter — it checks all QML files, not just
+changed ones:
+
+```sh
+python scripts/qml-lint-conventions.py
+```
+
+### Updating from upstream
+
+Use this rather than the [`Updating`](#updating) section further down, which is upstream's and
+assumes a plain `git pull` — that would merge upstream into `leah` instead of rebasing onto it,
+burying local commits under merge commits and making conflicts harder to reason about.
+
+Rebase the `leah` branch onto upstream so local commits stay on top and conflicts are limited
+to the files this fork actually touches:
+
+```sh
+git fetch upstream
+git rebase upstream/main
+```
+
+Then reinstall as above. Rebuild rather than just reinstalling — upstream may have changed the
+C++ plugin, and a stale `build/` against new QML fails in confusing ways:
+
+```sh
+cmake --build build && sudo cmake --install build
+```
+
+Rebasing rewrites history, so the push needs a lease:
+
+```sh
+git push --force-with-lease origin leah
+```
+
+> [!NOTE]
+> QML breaks at runtime, not at build time — a successful build says nothing about whether the
+> shell still works. After every rebase, open the surfaces this fork modifies (dashboard, nexus
+> settings, session menu) and check them by eye.
+
+To send a fix back upstream, branch off `upstream/main` rather than off `leah`, so the PR
+carries only that commit:
+
+```sh
+git switch -c fix/some-thing upstream/main
+git cherry-pick <sha>
+git push origin fix/some-thing
+gh pr create --repo caelestia-dots/shell
+```
+
 ## Components
 
 -   Widgets: [`Quickshell`](https://quickshell.outfoxxed.me)
