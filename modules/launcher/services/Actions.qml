@@ -15,13 +15,17 @@ Searcher {
         return search.slice(GlobalConfig.launcher.actionPrefix.length);
     }
 
-    list: variants.instances
+    readonly property var actions: GlobalConfig.launcher.actions.filter(a => (a.enabled ?? true) && (GlobalConfig.launcher.enableDangerousActions || !(a.dangerous ?? false)))
+    readonly property var order: actions.map(a => a.name ?? qsTr("Unnamed"))
+
+    // Variants appends newly created instances, so restore the configured order
+    list: [...variants.instances].sort((a, b) => root.order.indexOf(a.name) - root.order.indexOf(b.name))
     useFuzzy: GlobalConfig.launcher.useFuzzy.actions
 
     Variants {
         id: variants
 
-        model: GlobalConfig.launcher.actions.filter(a => (a.enabled ?? true) && (GlobalConfig.launcher.enableDangerousActions || !(a.dangerous ?? false)))
+        model: root.actions
 
         Action {}
     }
@@ -44,6 +48,9 @@ Searcher {
             } else if (command[0] === "setMode" && command.length > 1) {
                 list.screenState.launcher = false;
                 Colours.setMode(command[1]);
+            } else if (command[0] === "toggleMode"){
+                list.screenState.launcher = false;
+                Colours.setMode(Colours.light ? "dark" : "light")
             } else {
                 list.screenState.launcher = false;
                 if (!SessionManager.exec(command))
