@@ -130,17 +130,13 @@ MouseArea {
                         implicitWidth: menuOptionRow.implicitWidth + Tokens.padding.medium * 2
                         implicitHeight: menuOptionRow.implicitHeight + Tokens.padding.medium * 2
 
-                        radius: active ? Tokens.rounding.medium : Tokens.rounding.extraSmall
+                        radius: Tokens.rounding.extraSmall
                         topLeftRadius: index === 0 ? Tokens.rounding.medium : radius
                         topRightRadius: index === 0 ? Tokens.rounding.medium : radius
                         bottomLeftRadius: index === repeater?.count - 1 ? Tokens.rounding.medium : radius
                         bottomRightRadius: index === repeater?.count - 1 ? Tokens.rounding.medium : radius
 
                         color: Qt.alpha(Colours.palette.m3tertiaryContainer, active ? 1 : 0)
-
-                        Behavior on radius {
-                            Anim {}
-                        }
 
                         StateLayer {
                             topLeftRadius: parent.topLeftRadius
