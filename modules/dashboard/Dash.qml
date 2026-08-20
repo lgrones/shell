@@ -15,7 +15,7 @@ GridLayout {
     columnSpacing: Tokens.spacing.medium
 
     Rect {
-        Layout.column: 2
+        Layout.column: 0
         Layout.columnSpan: 3
         Layout.preferredWidth: Tokens.sizes.dashboard.userWidth
         Layout.fillHeight: true
@@ -30,6 +30,7 @@ GridLayout {
 
     Rect {
         Layout.row: 0
+        Layout.column: 3
         Layout.columnSpan: 2
         Layout.preferredWidth: Tokens.sizes.dashboard.weatherWidth
         Layout.preferredHeight: weather.implicitHeight
@@ -52,7 +53,7 @@ GridLayout {
     Rect {
         Layout.row: 1
         Layout.column: 1
-        Layout.columnSpan: 3
+        Layout.columnSpan: 4
         Layout.fillWidth: true
         Layout.preferredHeight: calendar.implicitHeight
 
@@ -60,17 +61,6 @@ GridLayout {
             id: calendar
 
             screenState: root.screenState
-        }
-    }
-
-    Rect {
-        Layout.row: 1
-        Layout.column: 4
-        Layout.preferredWidth: resources.implicitWidth
-        Layout.fillHeight: true
-
-        Resources {
-            id: resources
         }
     }
 
