@@ -39,7 +39,7 @@ Item {
 
             anchors.centerIn: parent
             implicitSize: parent.height
-            shape: MaterialShape.Pill
+            shape: MaterialShape.Circle
             color: Qt.alpha(root.pfpFallbackColour, 1)
             opacity: root.pfpFallbackColour.a
             layer.enabled: true
