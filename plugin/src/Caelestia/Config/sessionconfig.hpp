@@ -44,6 +44,7 @@ class SessionConfig : public ConfigObject {
     CONFIG_PROPERTY(bool, enabled, true)
     CONFIG_PROPERTY(int, dragThreshold, 30)
     CONFIG_PROPERTY(bool, vimKeybinds, false)
+    CONFIG_PROPERTY(QStringList, order, { u"logout"_s, u"shutdown"_s, u"gif"_s, u"hibernate"_s, u"reboot"_s })
     CONFIG_SUBOBJECT(SessionIcons, icons)
     CONFIG_SUBOBJECT(SessionCommands, commands)
 

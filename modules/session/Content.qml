@@ -15,74 +15,98 @@ Column {
 
     required property ScreenState screenState
 
+   function focusEntry(index: int): bool {
+        const entry = repeater.itemAt(index);
+
+        if (!entry?.isButton)
+            return false;
+
+        entry.item.forceActiveFocus();
+        return true;
+    }
+
+    function focusAdjacent(from: int, step: int): bool {
+        for (let i = from + step; i >= 0 && i < repeater.count; i += step)
+            if (focusEntry(i))
+                return true;
+
+        return false;
+    }
+
+    function focusFirst(): void {
+        focusAdjacent(-1, 1);
+    }
+
     padding: Tokens.padding.large
     rightPadding: CUtils.clamp(padding - Config.border.thickness, 0, padding)
     spacing: Tokens.spacing.large
 
-    SessionButton {
-        id: logout
+    Component.onCompleted: focusFirst()
 
-        icon: Config.session.icons.logout
-        command: Config.session.commands.logout
+    Connections {
+        function onLauncherChanged(): void {
+            if (!root.screenState.launcher)
+                root.focusFirst();
+        }
 
-        KeyNavigation.down: shutdown
+        target: root.screenState
+    }
 
-        Component.onCompleted: forceActiveFocus()
+    Repeater {
+        id: repeater
 
-        Connections {
-            function onLauncherChanged(): void {
-                if (!root.screenState.launcher)
-                    logout.forceActiveFocus();
+        model: Config.session.order
+
+        Loader {
+            id: entry
+
+            required property int index
+            required property string modelData
+
+            readonly property bool isGif: modelData === "gif"
+            readonly property bool isButton: !isGif && Config.session.icons[modelData] !== undefined
+
+            active: isGif || isButton
+            sourceComponent: isGif ? gif : button
+
+            Component {
+                id: gif
+
+                // AnimatedImage takes its implicit size from the source and does not
+                // allow overriding it, so a wrapper carries the size the Loader measures
+                Item {
+                    implicitWidth: Tokens.sizes.session.button
+                    implicitHeight: Tokens.sizes.session.button
+
+                    AnimatedImage {
+                        anchors.fill: parent
+                        sourceSize.width: width * ((QsWindow.window as QsWindow)?.devicePixelRatio ?? 1)
+
+                        playing: visible
+                        asynchronous: true
+                        speed: Config.general.sessionGifSpeed
+                        source: Paths.absolutePath(Config.paths.sessionGif)
+                        fillMode: AnimatedImage.PreserveAspectFit
+                    }
+                }
             }
 
-            target: root.screenState
+            Component {
+                id: button
+
+                SessionButton {
+                    index: entry.index
+                    icon: Config.session.icons[entry.modelData]
+                    command: Config.session.commands[entry.modelData]
+                }
+            }
         }
-    }
-
-    SessionButton {
-        id: shutdown
-
-        icon: Config.session.icons.shutdown
-        command: Config.session.commands.shutdown
-
-        KeyNavigation.up: logout
-        KeyNavigation.down: hibernate
-    }
-
-    AnimatedImage {
-        width: Tokens.sizes.session.button
-        height: Tokens.sizes.session.button
-        sourceSize.width: width * ((QsWindow.window as QsWindow)?.devicePixelRatio ?? 1)
-
-        playing: visible
-        asynchronous: true
-        speed: Config.general.sessionGifSpeed
-        source: Paths.absolutePath(Config.paths.sessionGif)
-        fillMode: AnimatedImage.PreserveAspectFit
-    }
-
-    SessionButton {
-        id: hibernate
-
-        icon: Config.session.icons.hibernate
-        command: Config.session.commands.hibernate
-
-        KeyNavigation.up: shutdown
-        KeyNavigation.down: reboot
-    }
-
-    SessionButton {
-        id: reboot
-
-        icon: Config.session.icons.reboot
-        command: Config.session.commands.reboot
-
-        KeyNavigation.up: hibernate
     }
 
     component SessionButton: IconButton {
         id: button
 
+        required property int index
         required property list<string> command
 
         function exec(): void {
@@ -102,26 +126,21 @@ Column {
         Keys.onEnterPressed: exec()
         Keys.onReturnPressed: exec()
         Keys.onEscapePressed: root.screenState.session = false
+        Keys.onUpPressed: event => event.accepted = root.focusAdjacent(index, -1)
+        Keys.onDownPressed: event => event.accepted = root.focusAdjacent(index, 1)
         Keys.onPressed: event => {
             if (!Config.session.vimKeybinds)
                 return;
 
             if (event.modifiers & Qt.ControlModifier) {
-                if ((event.key === Qt.Key_J || event.key === Qt.Key_N) && KeyNavigation.down) {
-                    KeyNavigation.down.focus = true;
-                    event.accepted = true;
-                } else if ((event.key === Qt.Key_K || event.key === Qt.Key_P) && KeyNavigation.up) {
-                    KeyNavigation.up.focus = true;
-                    event.accepted = true;
-                }
-            } else if (event.key === Qt.Key_Tab && KeyNavigation.down) {
-                KeyNavigation.down.focus = true;
-                event.accepted = true;
+                if (event.key === Qt.Key_J || event.key === Qt.Key_N)
+                    event.accepted = root.focusAdjacent(index, 1);
+                else if (event.key === Qt.Key_K || event.key === Qt.Key_P)
+                    event.accepted = root.focusAdjacent(index, -1);
+            } else if (event.key === Qt.Key_Tab) {
+                event.accepted = root.focusAdjacent(index, 1);
             } else if (event.key === Qt.Key_Backtab || (event.key === Qt.Key_Tab && (event.modifiers & Qt.ShiftModifier))) {
-                if (KeyNavigation.up) {
-                    KeyNavigation.up.focus = true;
-                    event.accepted = true;
-                }
+                event.accepted = root.focusAdjacent(index, -1);
             }
         }
     }

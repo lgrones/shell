@@ -828,6 +828,7 @@ For example, to automatically hide the bar on the monitor named `DP-1`:
         "enabled": true,
         "dragThreshold": 30,
         "vimKeybinds": false,
+        "order": ["logout", "shutdown", "gif", "hibernate", "reboot"],
         "icons": {
             "logout": "logout",
             "shutdown": "power_settings_new",
